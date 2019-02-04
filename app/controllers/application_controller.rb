@@ -13,14 +13,18 @@ class ApplicationController < ActionController::API
       if username
         player = Player.find_or_create_by!(username: username)
         player.scores.create!
-        render json: { text: ":tada: #{player.display_name}: *#{player.scores.count}*" }
+        render json: { text: ":tada: #{player.display_name}: *#{player.scores.count}*", response_type: 'in_channel' }
       else
-        render json: { text: 'Use: /pokepong `score @<<user>>``' }
+        render json: { text: 'Use: /pokepong `score @<<user>>``', response_type: 'in_channel' }
       end
     when 'scoreboard'
-      render json: { text: scoreboard(param.presence || 'day') }
+      render json: {
+        text: "*Scoreboard: #{Date.current}*",
+        attachments: [ text: scoreboard(param.presence || 'day')],
+        response_type: 'in_channel'
+      }
     else
-      render json: { text: "Valid command:\n \t/pokepong `score @<<user>>`\n \t/pokepong `scoreboard ['day' 'week' 'month' 'year']`" }
+      render json: { text: "Valid command:\n \t/pokepong `score @<<user>>`\n \t/pokepong `scoreboard ['day' 'week' 'month' 'year']`", response_type: 'in_channel' }
     end
   end
 
@@ -45,8 +49,7 @@ class ApplicationController < ActionController::API
     scores.transform_values! { |v| v.map(&:first) }
     scores = scores.sort_by { |v| -v.first }
 
-    p scores
-    message_score = ["*Scoreboard: #{Date.current}*"]
+    message_score = []
     scores.each_with_index do |(score, players), index|
       players.each do |player|
         message_score << "#{icons[index]}\t#{player.display_name} : *#{score}*"
